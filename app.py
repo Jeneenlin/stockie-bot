@@ -26,12 +26,12 @@ def callback():
     reply_token = req['originalDetectIntentRequest']['payload']['data']['replyToken']
     user_id = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
     disname = line_bot_api.get_profile(user_id).display_name
-    print('user_id : ' + user_id)
-    print('name : ' + disname)
-    print('text : ' + text)
-    print('user_id : ' + user_id)
-    print('intent : ' + intent)
-    print('reply_token : ' + reply_token)
+    # print('user_id : ' + user_id)
+    # print('name : ' + disname)
+    # print('text : ' + text)
+    # print('user_id : ' + user_id)
+    # print('intent : ' + intent)
+    # print('reply_token : ' + reply_token)
 
     reply(intent,text,reply_token,disname,user_id)
     return 'OK'
@@ -108,5 +108,5 @@ def retrieve_db(stock):
 #     print(ticker, last_quote)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
 
