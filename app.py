@@ -18,7 +18,7 @@ handler = WebhookHandler('6b0dccfb48298fba2818425b41263c9b')
 
 @app.route("/callback", methods=['POST'])
 def callback():
-    body = request.get_data(as_text=True)
+    # body = request.get_data(as_text=True)
     # print('body'+body)
     req = request.get_json(silent=True, force=True)
     intent = req['queryResult']['intent']['displayName']
@@ -43,7 +43,7 @@ def reply(intent,text,reply_token,disname,user_id):
         for doc in docs:
             ans = ans + f"{doc.id}" + "\n"
         ans = ans.rstrip()
-        text_message = TextSendMessage(text=ans)
+        text_message = TextSendMessage(text='คำศัพท์หุ้น\nอยากรู้คำไหนพิมพ์ได้เลย\n{}'.format(ans))
         line_bot_api.reply_message(reply_token,text_message)
 
     elif intent == 'Chart patterns':
@@ -52,7 +52,7 @@ def reply(intent,text,reply_token,disname,user_id):
         for doc in docs:
             ans = ans + f"{doc.id}" + "\n"
         ans = ans.rstrip()
-        text_message = TextSendMessage(text=ans)
+        text_message = TextSendMessage(text='รูปแบบกราฟ\nอยากรู้อันไหนพิมพ์ได้เลย\n{}'.format(ans))
         line_bot_api.reply_message(reply_token,text_message)
 
     elif intent == 'predict GC':
