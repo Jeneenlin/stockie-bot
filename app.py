@@ -1,6 +1,7 @@
 from flask import Flask, request
 from linebot import *
 from linebot.models import *
+import yfinance as yf
 from datetime import date, datetime
 # ------------------------ CONNECT DATABASE --------------------------------------------------------
 import firebase_admin
@@ -32,8 +33,9 @@ def callback():
     # print('user_id : ' + user_id)
     # print('intent : ' + intent)
     # print('reply_token : ' + reply_token)
-
+ 
     reply(intent,text,reply_token,disname,user_id)
+
     return 'OK'
 
 def reply(intent,text,reply_token,disname,user_id):
@@ -54,6 +56,27 @@ def reply(intent,text,reply_token,disname,user_id):
         ans = ans.rstrip()
         text_message = TextSendMessage(text='รูปแบบกราฟ\nอยากรู้อันไหนพิมพ์ได้เลย\n{}'.format(ans))
         line_bot_api.reply_message(reply_token,text_message)
+
+    elif intent == 'Today price GC':
+        line_reply_price(reply_token,'PTTGC')
+
+    elif intent == 'Today price IRPC':
+        line_reply_price(reply_token,'IRPC')
+
+    elif intent == 'Today price TOP':
+        line_reply_price(reply_token,'TOP')
+
+    elif intent == 'Today price GPSC':
+        line_reply_price(reply_token,'GPSC')
+
+    elif intent == 'Today price PTT':
+        line_reply_price(reply_token,'PTT')
+
+    elif intent == 'Today price PTTEP':
+        line_reply_price(reply_token,'PTTEP')
+
+    elif intent == 'Today price OR':
+        line_reply_price(reply_token,'OR')
 
     elif intent == 'predict GC':
         line_reply(reply_token,'PTTGC')
@@ -88,6 +111,16 @@ def line_reply(reply_token,stock):
     reply_message = [text_message,image_message]
     line_bot_api.reply_message(reply_token,reply_message)
 
+def line_reply_price(reply_token,stock):
+    pdp,st_close = get_data_db(stock)
+    name,tdp = today_price(stock)
+    today = date.today().strftime("%d %b %Y")
+    if st_close == False:
+        text_message = TextSendMessage(text='หุ้น {} วันนี้ {}\nราคาจริงปัจจุบัน = {}\nราคาที่ทำนาย = {}'.format(name,today,tdp,pdp[0]))
+    else:
+        text_message = TextSendMessage(text=pdp[0])
+    line_bot_api.reply_message(reply_token,text_message)
+
 def retrieve_db(stock):
     week_num = date.today().isocalendar()[1]
     year = date.today().isocalendar()[0]
@@ -100,12 +133,33 @@ def retrieve_db(stock):
         ans.append(f"{key} : {value}")
     return ans[0],ans[1],ans[2],ans[3],ans[4]
 
-#     tickers = ['PTTGC.BK']
-# for ticker in tickers:
-#     ticker_yahoo = yf.Ticker(ticker)
-#     data = ticker_yahoo.history()
-#     last_quote = data['Close'].iloc[-1]
-#     print(ticker, last_quote)
+def today_price(stock):
+    tickers = [stock]
+    for ticker in tickers:
+        ticker_yahoo = yf.Ticker('{}.BK'.format(stock))
+        data = ticker_yahoo.history()
+        last_quote = data['Close'].iloc[-1]
+    return ticker, round(last_quote,3)
+
+def get_data_db(stock):
+    week_num = date.today().isocalendar()[1]
+    year = date.today().isocalendar()[0]
+    doc_name = 'weekno.{} of {}'.format(week_num,year)
+
+    doc_ref = db.document('{}_resultData/{}'.format(stock,doc_name))
+    doc_dict = doc_ref.get().to_dict()
+    doc_sort = sorted(doc_dict.items(),key=lambda date: datetime.strptime(date[0], '%d %b %Y'))
+    ans = []
+    st_close = False
+    today = date.today().strftime("%d %b %Y")
+    for key, value in doc_sort:
+        if str(key) == today:
+            ans.append(f"{value}")
+            st_close = False
+        else:
+            ans.append("วันนี้ตลาดหุ้นปิดนะคับบ เข้ามาดูใหม่วันจันทร์น้า")
+            st_close = True
+    return ans,st_close
 
 if __name__ == "__main__":
     app.run(debug=False)
