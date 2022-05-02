@@ -156,7 +156,8 @@ def get_data_db(stock):
         if str(key) == today:
             ans.append(f"{value}")
             st_close = False
-        else:
+            break
+        elif str(key) != today:
             ans.append("วันนี้ตลาดหุ้นปิดนะคับบ เข้ามาดูใหม่วันจันทร์น้า")
             st_close = True
     return ans,st_close
