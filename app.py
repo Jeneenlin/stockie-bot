@@ -2,7 +2,8 @@ from flask import Flask, request
 from linebot import *
 from linebot.models import *
 import yfinance as yf
-from datetime import date, datetime
+from datetime import datetime
+import pytz
 # ------------------------ CONNECT DATABASE --------------------------------------------------------
 import firebase_admin
 from firebase_admin import credentials, storage
@@ -16,6 +17,7 @@ app = Flask(__name__)
 
 line_bot_api = LineBotApi('kE96JwdX/Qfz0zB9w/3FoxBw1oXvFNACjmOFSYe5iFGh46p/jTV5g4EML5a2dYmKxeFzswMHZg8d1LyVNCu0KesXP8GaBdLJetY0KqxrSou/6onAmwKlQmSyO2T4nUbFurM4sMkjnGZ1WT+leFkCQgdB04t89/1O/w1cDnyilFU=')
 handler = WebhookHandler('6b0dccfb48298fba2818425b41263c9b')
+tz = pytz.timezone('Asia/Bangkok')
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -114,16 +116,16 @@ def line_reply(reply_token,stock):
 def line_reply_price(reply_token,stock):
     pdp,st_close = get_data_db(stock)
     name,tdp = today_price(stock)
-    today = date.today().strftime("%d %b %Y")
+    today = datetime.now(tz).strftime("%d %b %Y")
     if st_close == False:
-        text_message = TextSendMessage(text='หุ้น {} วันนี้ {}\nราคาจริงปัจจุบัน = {}\nราคาที่ทำนาย = {}'.format(name,today,tdp,pdp[0]))
+        text_message = TextSendMessage(text='หุ้น {} วันนี้ {}\nราคาจริงปัจจุบัน = {}\nราคาที่ทำนาย = {}'.format(name,today,tdp,pdp[-1]))
     else:
-        text_message = TextSendMessage(text=pdp[0])
+        text_message = TextSendMessage(text=pdp[-1])
     line_bot_api.reply_message(reply_token,text_message)
 
 def retrieve_db(stock):
-    week_num = date.today().isocalendar()[1]
-    year = date.today().isocalendar()[0]
+    week_num = datetime.now(tz).isocalendar()[1]
+    year = datetime.now(tz).isocalendar()[0]
     doc_name = 'weekno.{} of {}'.format(week_num,year)
     doc_ref = db.document('{}_resultData/{}'.format(stock,doc_name))
     doc_dict = doc_ref.get().to_dict()
@@ -142,16 +144,15 @@ def today_price(stock):
     return ticker, round(last_quote,3)
 
 def get_data_db(stock):
-    week_num = date.today().isocalendar()[1]
-    year = date.today().isocalendar()[0]
+    week_num = datetime.now(tz).isocalendar()[1]
+    year = datetime.now(tz).isocalendar()[0]
     doc_name = 'weekno.{} of {}'.format(week_num,year)
-
     doc_ref = db.document('{}_resultData/{}'.format(stock,doc_name))
     doc_dict = doc_ref.get().to_dict()
     doc_sort = sorted(doc_dict.items(),key=lambda date: datetime.strptime(date[0], '%d %b %Y'))
     ans = []
     st_close = False
-    today = date.today().strftime("%d %b %Y")
+    today = datetime.now(tz).strftime("%d %b %Y")
     for key, value in doc_sort:
         if str(key) == today:
             ans.append(f"{value}")
